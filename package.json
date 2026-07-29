@@ -1,0 +1,120 @@
+{
+  "name": "email-this",
+  "displayName": "Email This",
+  "description": "Email html files",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "email-this.sendThis",
+        "title": "Send Email",
+        "category": "Email This"
+      },
+      {
+        "command": "email-this.updateSettings",
+        "title": "Update Settings",
+        "category": "Email This"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "email-this.sendThis",
+          "group": "emailThis",
+          "when": "resourceLangId == html"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "email-this.sendThis",
+          "group": "emailThis",
+          "when": "resourceExtname == .html"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Email This",
+      "properties": {
+        "emailThis.smtp.host": {
+          "type": "string",
+          "default": "",
+          "description": "SMTP Server ip or host name"
+        },
+        "emailThis.smtp.port": {
+          "type": "number",
+          "default": 587,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "SMTP Server port"
+        },
+        "emailThis.smtp.skipAuthentication": {
+          "type": "boolean",
+          "default": false,
+          "description": "Should we skip smtp authentication?"
+        },
+        "emailThis.emailFrom": {
+          "type": "string",
+          "default": "",
+          "format": "email",
+          "description": "From Email Address"
+        },
+        "emailThis.emailTo": {
+          "type": "string",
+          "default": "",
+          "format": "email",
+          "description": "To Email Address"
+        },
+        "emailThis.emailCc": {
+          "type": "string",
+          "default": "",
+          "description": "CC Email Address"
+          
+        },
+        "emailThis.emailBcc": {
+          "type": "string",
+          "default": "",
+          "description": "BCC Email Address"
+        },
+        "emailThis.emailSubject": {
+          "type": "string",
+          "default": "",
+          "description": "Subject"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.13.3",
+    "@types/nodemailer": "^8.0.1",
+    "@types/vscode": "^1.125.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.5.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "nodemailer": "^9.0.3"
+  }
+}
