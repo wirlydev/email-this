@@ -32,9 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
       //smtp info
       let smtpHost = config.get<string>("smtp.host");
       let smtpPort = config.get<number>("smtp.port");
-      let smtpSkipAuthentication = config.get<boolean>(
-        "smtp.skipAuthentication",
-      );
+
       let smtpUsername = await context.secrets.get("emailThis.smtp.username");
       let smtpPassword = await context.secrets.get("emailThis.smtp.password");
 
@@ -45,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
         emailSubject === "" ||
         smtpHost === "" ||
         smtpPort === undefined ||
-        (smtpSkipAuthentication === false && (!smtpUsername || !smtpPassword))
+        ((smtpUsername || smtpPassword) && (!smtpUsername || !smtpPassword))
       ) {
         vscode.window.showErrorMessage(
           'Missing settings. Run "Email This: Update Settings" first.',
@@ -66,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
       };
 
       //if we want to send credentials set them
-      if (!smtpSkipAuthentication) {
+      if (smtpUsername || smtpPassword) {
         smtpTransportOptions.auth = {
           user: smtpUsername,
           pass: smtpPassword,
@@ -87,34 +85,32 @@ export function activate(context: vscode.ExtensionContext) {
 
       try {
         await transporter.verify();
-        console.log("Server is ready to take our messages");
+        console.log("Transporter verified.");
       } catch (err) {
-        console.error("Verification failed:", err);
+        console.log("Transporter failed to verify.");
+        vscode.window.showErrorMessage("Unable to send email : " + err);
+        return;
       }
 
       try {
-        const info = await transporter.sendMail(emailOptions);
-        vscode.window.showInformationMessage("Email Sent to " + emailTo);
+        console.log("lets send some emails!");
+        const sendEmailResults = await transporter.sendMail(emailOptions);
+
+        //show email addresses that were rejected, if any
+        if (sendEmailResults.rejected.length) {
+          vscode.window.showErrorMessage(
+            `These email addresses were rejected by the server : ${sendEmailResults.rejected.join(", ")}`,
+          );
+        }
+
+        console.error(sendEmailResults);
       } catch (err) {
-        vscode.window.showInformationMessage("Boom! (in a bad way) : " + err);
+        vscode.window.showErrorMessage("Unable to send : " + err);
         console.error(err);
+        return;
       }
-    },
-  );
 
-  const setApiKey = vscode.commands.registerCommand(
-    "email-this.setApiKey",
-    async () => {
-      const apiKey = await vscode.window.showInputBox({
-        prompt: "Enter your API key",
-        password: true,
-        ignoreFocusOut: true,
-      });
-
-      if (apiKey) {
-        await context.secrets.store("emailThis.apiKey", apiKey);
-        vscode.window.showInformationMessage("Email This: API key saved.");
-      }
+      vscode.window.showInformationMessage("Email sent to : " + emailTo);
     },
   );
 
@@ -187,39 +183,51 @@ export function activate(context: vscode.ExtensionContext) {
 
       config.update("smtp.port", smtpPort);
 
-      //step 8: smtpUsername
-      let savedSmtpUsername = await context.secrets.get(
-        "emailThis.smtp.username",
+      //step 8b: wanna authenticate?
+      const smtpAuthChoice = await vscode.window.showQuickPick(["Yes", "No"],
+        {prompt: "Authenticate?"}
       );
 
-      const smtpUsername = await vscode.window.showInputBox({
-        prompt: "Enter SMTP Username",
-        value: savedSmtpUsername,
-        ignoreFocusOut: true,
-      });
+      config.update("smtp.auth", smtpAuthChoice !== "No");
 
-      await context.secrets.store(
-        "emailThis.smtp.username",
-        smtpUsername || "",
-      );
-
-      //step 9: smtpPassword
-      let savedSmtpPassword = await context.secrets.get(
-        "emailThis.smtp.password",
-      );
-
-      const smtpPassword = await vscode.window.showInputBox({
-        prompt: "Enter your SMTP Password",
-        placeHolder: savedSmtpPassword ? "•••••••• (already set — leave blank to keep)" : "",
-        ignoreFocusOut: true,
-        password: true
-      });
-
-      if(smtpPassword){
-          await context.secrets.store(
-          "emailThis.smtp.password",
-          smtpPassword || "",
+      if (smtpAuthChoice === "Yes") {
+        //step 8: smtpUsername
+        let savedSmtpUsername = await context.secrets.get(
+          "emailThis.smtp.username",
         );
+
+        const smtpUsername = await vscode.window.showInputBox({
+          prompt: "Enter SMTP Username",
+          value: savedSmtpUsername,
+          ignoreFocusOut: true,
+        });
+
+        await context.secrets.store(
+          "emailThis.smtp.username",
+          smtpUsername || "",
+        );
+
+        //step 9: smtpPassword
+        let savedSmtpPassword = await context.secrets.get(
+          "emailThis.smtp.password",
+        );
+
+        const smtpPassword = await vscode.window.showInputBox({
+          prompt: "Enter your SMTP Password",
+          placeHolder: savedSmtpPassword
+            ? "•••••••• (already set — leave blank to keep)"
+            : "",
+          ignoreFocusOut: true,
+          password: true,
+        });
+
+        if (smtpPassword) {
+          await context.secrets.store("emailThis.smtp.password", smtpPassword);
+        }
+      } else {
+        //clear the existing credentials if they don't want to authenticate
+        await context.secrets.delete("emailThis.smtp.username");
+        await context.secrets.delete("emailThis.smtp.password");
       }
     },
   );

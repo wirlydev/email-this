@@ -55,10 +55,10 @@
           "maximum": 65535,
           "description": "SMTP Server port"
         },
-        "emailThis.smtp.skipAuthentication": {
+        "emailThis.smtp.authenticate": {
           "type": "boolean",
-          "default": false,
-          "description": "Should we skip smtp authentication?"
+          "default": true,
+          "description": "Should we authenticate?"
         },
         "emailThis.emailFrom": {
           "type": "string",

@@ -1,6 +1,6 @@
 # email-this README
 
-This is the README for your extension "email-this". After writing up a brief description, we recommend including the following sections.
+Emails html files through smtp. 
 
 ## Features
 
