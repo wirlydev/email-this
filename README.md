@@ -1,71 +1,32 @@
 # Email This
 
-Emails html files through smtp. 
+When working on html emails locally, just right click > "Email This" to send the html through smtp. 
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+Does nothing but send emails. 
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+To configre run "Email This : Update Settings" from the command pallette. 
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+An SMTP Server to send emails through and an html file to send.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+* `emailThis.smtp.host`: The SMTP Server we are going to send through
+* `emailThis.smtp.port`: SMTP Port
+* `emailThis.smtp.authenticate`: Boolean whether or not we want to send username / password
+* `emailThis.emailFrom`: From email address
+* `emailThis.emailTo`: To email address
+* `emailThis.emailCc`: Optional, CC email address or comma separated list of email addresses
+* `emailThis.emailBcc`: Optional, Bcc email address or comma separated list of email addresses
+* `emailThis.emailSubject`: Email Subject
 
-## Known Issues
+## Changelog
+To check full changelog [click here](CHANGELOG.md).
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+## LICENSE
+This extension is licensed under the [MIT License](LICENSE)

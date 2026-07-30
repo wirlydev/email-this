@@ -1,13 +1,17 @@
 {
-  "name": "email-this",
+  "name": "EmailThis",
   "displayName": "Email This",
-  "description": "Email html files",
+  "description": "Send html as body of email through SMTP",
   "version": "0.0.1",
+  "publisher": "wirlydev",
   "engines": {
     "vscode": "^1.125.0"
   },
   "categories": [
     "Other"
+  ],
+   "keywords": [
+    "html email"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -15,7 +19,7 @@
     "commands": [
       {
         "command": "email-this.sendThis",
-        "title": "Send Email",
+        "title": "Email This",
         "category": "Email This"
       },
       {
@@ -98,6 +102,12 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
+  },
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wirlydev/email-this.git"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
