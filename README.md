@@ -1,4 +1,4 @@
-# email-this README
+# Email This
 
 Emails html files through smtp. 
 
