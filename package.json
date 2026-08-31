@@ -2,7 +2,7 @@
   "name": "EmailThis",
   "displayName": "Email This",
   "description": "Send html as body of email through SMTP",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "wirlydev",
   "engines": {
     "vscode": "^1.125.0"
@@ -10,7 +10,7 @@
   "categories": [
     "Other"
   ],
-   "keywords": [
+  "keywords": [
     "html email"
   ],
   "activationEvents": [],
