@@ -18,13 +18,13 @@
   "contributes": {
     "commands": [
       {
-        "command": "email-this.sendThis",
-        "title": "Email This",
+        "command": "email-this.updateSettings",
+        "title": "Update Settings",
         "category": "Email This"
       },
       {
-        "command": "email-this.updateSettings",
-        "title": "Update Settings",
+        "command": "email-this.sendThis",
+        "title": "Email This",
         "category": "Email This"
       }
     ],
@@ -62,7 +62,7 @@
         "emailThis.smtp.authenticate": {
           "type": "boolean",
           "default": true,
-          "description": "Should we authenticate?"
+          "markdownDescription": "Whether to authenticate with the SMTP server. The **username and password** are stored securely in your OS keychain — set or clear them with the **`Email This: Update Settings`** command, not here."
         },
         "emailThis.emailFrom": {
           "type": "string",
@@ -80,7 +80,6 @@
           "type": "string",
           "default": "",
           "description": "CC Email Address"
-          
         },
         "emailThis.emailBcc": {
           "type": "string",

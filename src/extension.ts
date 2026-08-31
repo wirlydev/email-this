@@ -6,6 +6,64 @@ import Mail from "nodemailer/lib/mailer";
 import type { Address, Options } from "nodemailer/lib/mailer";
 import SMTPConnection from "nodemailer/lib/smtp-connection";
 
+interface EmailConfig {
+  emailFrom: string;
+  emailTo: string;
+  emailCc?: string;
+  emailBcc?: string;
+  emailSubject: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername?: string;
+  smtpPassword?: string;
+}
+
+//read every setting/secret we need to send an email
+//returns null when a required value is missing (or only one of username/password is set)
+async function loadEmailConfig(
+  context: vscode.ExtensionContext,
+): Promise<EmailConfig | null> {
+  const config = vscode.workspace.getConfiguration("emailThis");
+
+  //email info
+  const emailFrom = config.get<string>("emailFrom");
+  const emailTo = config.get<string>("emailTo");
+  const emailCc = config.get<string>("emailCc");
+  const emailBcc = config.get<string>("emailBcc");
+  const emailSubject = config.get<string>("emailSubject");
+
+  //smtp info
+  const smtpHost = config.get<string>("smtp.host");
+  const smtpPort = config.get<number>("smtp.port");
+
+  const smtpUsername = await context.secrets.get("emailThis.smtp.username");
+  const smtpPassword = await context.secrets.get("emailThis.smtp.password");
+
+  //make sure we have the minimum settings to actually send an email
+  if (
+    !emailFrom ||
+    !emailTo ||
+    !emailSubject ||
+    !smtpHost ||
+    smtpPort === undefined ||
+    ((smtpUsername || smtpPassword) && (!smtpUsername || !smtpPassword))
+  ) {
+    return null;
+  }
+
+  return {
+    emailFrom,
+    emailTo,
+    emailCc,
+    emailBcc,
+    emailSubject,
+    smtpHost,
+    smtpPort,
+    smtpUsername,
+    smtpPassword,
+  };
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -20,36 +78,38 @@ export function activate(context: vscode.ExtensionContext) {
       const emailBodyAsBytes = await vscode.workspace.fs.readFile(uri);
       const emailBodyAsString = Buffer.from(emailBodyAsBytes).toString("utf8");
 
-      let config = vscode.workspace.getConfiguration("emailThis");
-
-      //email info
-      let emailFrom = config.get<string>("emailFrom");
-      let emailTo = config.get<string>("emailTo");
-      let emailCc = config.get<string>("emailCc");
-      let emailBcc = config.get<string>("emailBcc");
-      let emailSubject = config.get<string>("emailSubject");
-
-      //smtp info
-      let smtpHost = config.get<string>("smtp.host");
-      let smtpPort = config.get<number>("smtp.port");
-
-      let smtpUsername = await context.secrets.get("emailThis.smtp.username");
-      let smtpPassword = await context.secrets.get("emailThis.smtp.password");
-
-      //make sure we have the minimum settings to actually send an email
-      if (
-        emailFrom === "" ||
-        emailTo === "" ||
-        emailSubject === "" ||
-        smtpHost === "" ||
-        smtpPort === undefined ||
-        ((smtpUsername || smtpPassword) && (!smtpUsername || !smtpPassword))
-      ) {
-        vscode.window.showErrorMessage(
-          'Missing settings. Run "Email This: Update Settings" first.',
+      //load the settings we need; if anything's missing, offer to configure
+      //and retry the send once the wizard closes
+      let settings = await loadEmailConfig(context);
+      if (!settings) {
+        const pick = await vscode.window.showWarningMessage(
+          "Email This isn't configured yet.",
+          "Configure now",
         );
-        return;
+        if (pick !== "Configure now") {
+          return;
+        }
+
+        await vscode.commands.executeCommand("email-this.updateSettings");
+
+        settings = await loadEmailConfig(context);
+        if (!settings) {
+          vscode.window.showErrorMessage(
+            "Email This is still missing required settings.",
+          );
+          return;
+        }
       }
+
+      const {
+        emailFrom,
+        emailTo,
+        emailSubject,
+        smtpHost,
+        smtpPort,
+        smtpUsername,
+        smtpPassword,
+      } = settings;
 
       //make api request to send email
       //callback to upate with response
@@ -127,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("emailFrom", emailFrom);
+      await config.update("emailFrom", emailFrom, vscode.ConfigurationTarget.Global);
 
       //step 2: emailTo
       const emailTo = await vscode.window.showInputBox({
@@ -136,7 +196,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("emailTo", emailTo);
+      await config.update("emailTo", emailTo, vscode.ConfigurationTarget.Global);
 
       //step 3: emailCc
       const emailCc = await vscode.window.showInputBox({
@@ -145,7 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("emailCc", emailCc);
+      await config.update("emailCc", emailCc, vscode.ConfigurationTarget.Global);
 
       //step 4: emailBcc
       const emailBcc = await vscode.window.showInputBox({
@@ -154,7 +214,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("emailBcc", emailBcc);
+      await config.update("emailBcc", emailBcc, vscode.ConfigurationTarget.Global);
 
       //step 5: emailSubject
       const emailSubject = await vscode.window.showInputBox({
@@ -163,7 +223,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("emailSubject", emailSubject);
+      await config.update("emailSubject", emailSubject, vscode.ConfigurationTarget.Global);
 
       //step 6: smtpHost
       const smtpHost = await vscode.window.showInputBox({
@@ -172,7 +232,7 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("smtp.host", smtpHost);
+      await config.update("smtp.host", smtpHost, vscode.ConfigurationTarget.Global);
 
       //step 7: smtpPort
       const smtpPort = await vscode.window.showInputBox({
@@ -181,14 +241,14 @@ export function activate(context: vscode.ExtensionContext) {
         ignoreFocusOut: true,
       });
 
-      config.update("smtp.port", smtpPort);
+      await config.update("smtp.port", Number(smtpPort), vscode.ConfigurationTarget.Global);
 
       //step 8b: wanna authenticate?
       const smtpAuthChoice = await vscode.window.showQuickPick(["Yes", "No"],
         {prompt: "Authenticate?"}
       );
 
-      config.update("smtp.auth", smtpAuthChoice !== "No");
+      await config.update("smtp.authenticate", smtpAuthChoice !== "No", vscode.ConfigurationTarget.Global);
 
       if (smtpAuthChoice === "Yes") {
         //step 8: smtpUsername
@@ -232,7 +292,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(sendThis);
+  context.subscriptions.push(sendThis, updateSettings);
 }
 
 // This method is called when your extension is deactivated
